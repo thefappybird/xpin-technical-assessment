@@ -23,6 +23,10 @@ mcp.json
 opencode.json
 copilot-instructions.md
 .github/copilot-instructions.md
+.impeccable/
+PRODUCT.md
+DESIGN.md
+DESIGN.*.md
 
 # === Dependencies / build output (repo-wide safety net; client & server each also have their own) ===
 node_modules/

@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/data/accounts.ts","./src/data/dashboard-builder.ts","./src/data/scenarios.ts","./src/data/table-query.ts","./src/middleware/error-handler.ts","./src/routes/generate-dashboard.ts","./src/routes/widget-action.ts","./src/types/dashboard.ts"],"version":"6.0.3"}
