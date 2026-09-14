@@ -9,6 +9,7 @@
 import type {
   ActionListItem,
   DistributionBucket,
+  DynamicFormField,
   Layout,
   Theme,
 } from '../types/dashboard.js'
@@ -36,15 +37,43 @@ export interface DistributionSpec {
   baseBuckets: DistributionBucket[]
 }
 
+export interface FormSpec {
+  id: string
+  title: string
+  fields: DynamicFormField[]
+}
+
+export interface TextInsightSpec {
+  id: string
+  title: string
+  body: string
+  tone?: 'success' | 'warning' | 'error' | 'neutral'
+}
+
 export interface ScenarioTemplate {
   id: 'A' | 'B' | 'C'
   layout: Layout
   theme: Theme
   metricCards: MetricCardSpec[]
   table: { id: string; title: string }
+  form: FormSpec
+  insight: TextInsightSpec
   actionList: { id: string; title: string; items: ActionListItem[] }
   distributions: DistributionSpec[]
 }
+
+/**
+ * Field names are shared across every template on purpose — the
+ * `'form/submit'` handler's cross-field validation (escalation threshold
+ * must be >= review threshold) is hardcoded to these two keys, same as
+ * `ESCALATE_ITEM_ID` above is hardcoded for the checklist demo. Titles/
+ * defaults still vary per template so the form doesn't read as a copy-paste.
+ */
+const REVIEW_PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+]
 
 // ---------------------------------------------------------------------------
 // Template A — default / "risk", "review", "account" keywords
@@ -94,6 +123,36 @@ const templateA: ScenarioTemplate = {
     },
   ],
   table: { id: 'wgt_table', title: 'Top accounts by risk' },
+  form: {
+    id: 'wgt_form',
+    title: 'Review Parameters',
+    fields: [
+      { name: 'reviewThreshold', label: 'Review Threshold', type: 'slider', min: 0, max: 100, step: 1, default: 70 },
+      {
+        name: 'escalationThreshold',
+        label: 'Escalation Threshold',
+        type: 'slider',
+        min: 0,
+        max: 100,
+        step: 1,
+        default: 90,
+      },
+      { name: 'autoEscalate', label: 'Auto-escalate Critical Accounts', type: 'toggle', default: true },
+      {
+        name: 'reviewPriority',
+        label: 'Review Priority',
+        type: 'select',
+        options: REVIEW_PRIORITY_OPTIONS,
+        default: 'medium',
+      },
+    ],
+  },
+  insight: {
+    id: 'wgt_insight',
+    title: 'Narrative Summary',
+    body: 'Flagged-account volume is up 12.4% week-over-week, concentrated in the Institutional segment. Critical accounts (score 90+) grew to 996, keeping pace with the broader increase rather than accelerating independently — current review capacity should still absorb the backlog if the escalation queue stays clear this week.',
+    tone: 'warning',
+  },
   actionList: {
     id: 'wgt_actions',
     title: 'Recommended actions',
@@ -170,6 +229,36 @@ const templateB: ScenarioTemplate = {
     },
   ],
   table: { id: 'wgt_table', title: 'Accounts under compliance review' },
+  form: {
+    id: 'wgt_form',
+    title: 'Compliance Parameters',
+    fields: [
+      { name: 'reviewThreshold', label: 'Case Review Threshold', type: 'slider', min: 0, max: 100, step: 1, default: 65 },
+      {
+        name: 'escalationThreshold',
+        label: 'Case Escalation Threshold',
+        type: 'slider',
+        min: 0,
+        max: 100,
+        step: 1,
+        default: 85,
+      },
+      { name: 'autoEscalate', label: 'Auto-escalate Confirmed Violations', type: 'toggle', default: true },
+      {
+        name: 'reviewPriority',
+        label: 'Case Priority',
+        type: 'select',
+        options: REVIEW_PRIORITY_OPTIONS,
+        default: 'high',
+      },
+    ],
+  },
+  insight: {
+    id: 'wgt_insight',
+    title: 'Narrative Summary',
+    body: 'AML alert volume is up 9.5% week-over-week with 573 alerts still pending triage — the fastest-growing input to the open-case count. Average audit cycle time continues to improve (down 8.4%), suggesting the backlog is a triage bottleneck rather than a downstream review-capacity problem.',
+    tone: 'error',
+  },
   actionList: {
     id: 'wgt_actions',
     title: 'Compliance checklist',
@@ -249,6 +338,36 @@ const templateC: ScenarioTemplate = {
     },
   ],
   table: { id: 'wgt_table', title: 'Accounts by performance trend' },
+  form: {
+    id: 'wgt_form',
+    title: 'Portfolio Parameters',
+    fields: [
+      { name: 'reviewThreshold', label: 'Trend Review Threshold', type: 'slider', min: 0, max: 100, step: 1, default: 55 },
+      {
+        name: 'escalationThreshold',
+        label: 'Trend Escalation Threshold',
+        type: 'slider',
+        min: 0,
+        max: 100,
+        step: 1,
+        default: 80,
+      },
+      { name: 'autoEscalate', label: 'Auto-escalate Deteriorating Accounts', type: 'toggle', default: false },
+      {
+        name: 'reviewPriority',
+        label: 'Review Priority',
+        type: 'select',
+        options: REVIEW_PRIORITY_OPTIONS,
+        default: 'low',
+      },
+    ],
+  },
+  insight: {
+    id: 'wgt_insight',
+    title: 'Narrative Summary',
+    body: 'Portfolio value at risk continues to decline (-1.8%), and improving accounts (341) now outnumber deteriorating ones (189) by a wide margin. The 30-day trend score is essentially flat, so this reads as steady, broad-based improvement rather than a shift being driven by a small number of large accounts.',
+    tone: 'success',
+  },
   actionList: {
     id: 'wgt_actions',
     title: 'Portfolio actions',

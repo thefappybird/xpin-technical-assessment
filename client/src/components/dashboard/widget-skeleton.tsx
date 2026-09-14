@@ -12,6 +12,8 @@ import type { WidgetType } from '@/types/dashboard'
 const CONTENT_HEIGHT: Record<WidgetType, string> = {
   METRIC_CARD: 'h-20',
   DATA_TABLE: 'h-80',
+  DYNAMIC_FORM: 'h-56',
+  TEXT_INSIGHT: 'h-24',
   ACTION_LIST: 'h-48',
   DISTRIBUTION_CHART: 'h-48',
 }

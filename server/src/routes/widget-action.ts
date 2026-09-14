@@ -11,6 +11,8 @@ import type {
   ActionListWidget,
   ChecklistToggleItemPayload,
   DataTableWidget,
+  DynamicFormSubmitPayload,
+  DynamicFormWidget,
   TableQueryPayload,
   Widget,
   WidgetActionRequest,
@@ -56,6 +58,13 @@ function parseChecklistTogglePayload(payload: unknown): ChecklistToggleItemPaylo
   return { itemId: payload.itemId }
 }
 
+function parseDynamicFormSubmitPayload(payload: unknown): DynamicFormSubmitPayload {
+  if (!isRecord(payload) || !isRecord(payload.values)) {
+    throw new ApiError(400, 'INVALID_PAYLOAD', '"form/submit" requires a payload with a "values" object.')
+  }
+  return { values: payload.values as DynamicFormSubmitPayload['values'] }
+}
+
 function handleTableQuery(widget: Widget, payload: unknown): DataTableWidget {
   if (widget.type !== 'DATA_TABLE') {
     throw new ApiError(400, 'WIDGET_TYPE_MISMATCH', `Widget "${widget.id}" is not a DATA_TABLE widget.`)
@@ -99,6 +108,57 @@ function handleChecklistToggle(widget: Widget, payload: unknown): ActionListWidg
   }
 }
 
+/**
+ * Server-side counterpart to `dynamic-form-widget.tsx`'s `validate()` —
+ * defense in depth, never trust the client. Per-field range/option/type
+ * checks against the widget's own field specs, plus the same cross-field
+ * "escalation >= review" rule the client enforces before it ever lets the
+ * request through (see that file's docstring for why this rule exists at
+ * all — the concrete demo of "dynamic" validation).
+ */
+function validateDynamicFormValues(widget: DynamicFormWidget, values: DynamicFormSubmitPayload['values']): void {
+  for (const field of widget.data.fields) {
+    const value = values[field.name]
+    if (field.type === 'slider') {
+      if (typeof value !== 'number' || value < field.min || value > field.max) {
+        throw new ApiError(
+          400,
+          'INVALID_PAYLOAD',
+          `"${field.name}" must be a number between ${field.min} and ${field.max}.`,
+        )
+      }
+    } else if (field.type === 'toggle') {
+      if (typeof value !== 'boolean') {
+        throw new ApiError(400, 'INVALID_PAYLOAD', `"${field.name}" must be a boolean.`)
+      }
+    } else if (field.type === 'select') {
+      if (typeof value !== 'string' || !field.options.some((option) => option.value === value)) {
+        throw new ApiError(400, 'INVALID_PAYLOAD', `"${field.name}" must be one of the field's own options.`)
+      }
+    }
+  }
+
+  if (typeof values.reviewThreshold === 'number' && typeof values.escalationThreshold === 'number') {
+    if (values.escalationThreshold < values.reviewThreshold) {
+      throw new ApiError(
+        400,
+        'INVALID_PAYLOAD',
+        'Escalation threshold must be greater than or equal to the review threshold.',
+      )
+    }
+  }
+}
+
+function handleFormSubmit(widget: Widget, payload: unknown): DynamicFormWidget {
+  if (widget.type !== 'DYNAMIC_FORM') {
+    throw new ApiError(400, 'WIDGET_TYPE_MISMATCH', `Widget "${widget.id}" is not a DYNAMIC_FORM widget.`)
+  }
+  const { values } = parseDynamicFormSubmitPayload(payload)
+  validateDynamicFormValues(widget, values)
+
+  return { ...widget, data: { ...widget.data, values } }
+}
+
 router.post('/', (req, res, next) => {
   try {
     const body = req.body as Partial<WidgetActionRequest> | undefined
@@ -121,6 +181,9 @@ router.post('/', (req, res, next) => {
         break
       case 'checklist/toggle-item':
         updated = handleChecklistToggle(widget, body?.payload)
+        break
+      case 'form/submit':
+        updated = handleFormSubmit(widget, body?.payload)
         break
       default:
         throw new ApiError(400, 'UNKNOWN_ACTION', `Unknown widget action "${action}".`)

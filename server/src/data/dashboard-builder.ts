@@ -10,14 +10,18 @@ import type {
   DashboardResponse,
   DataTableWidget,
   DistributionChartWidget,
+  DynamicFormWidget,
   MetricCardWidget,
+  TextInsightWidget,
   Widget,
 } from '../types/dashboard.js'
 import {
   matchScenario,
   type DistributionSpec,
+  type FormSpec,
   type MetricCardSpec,
   type ScenarioTemplate,
+  type TextInsightSpec,
 } from './scenarios.js'
 import { queryAccounts, TABLE_COLUMNS } from './table-query.js'
 
@@ -76,6 +80,27 @@ function buildTable(spec: ScenarioTemplate['table']): DataTableWidget {
   }
 }
 
+function buildDynamicForm(spec: FormSpec): DynamicFormWidget {
+  return {
+    id: spec.id,
+    type: 'DYNAMIC_FORM',
+    title: spec.title,
+    data: {
+      fields: spec.fields,
+      values: Object.fromEntries(spec.fields.map((field) => [field.name, field.default])),
+    },
+  }
+}
+
+function buildTextInsight(spec: TextInsightSpec): TextInsightWidget {
+  return {
+    id: spec.id,
+    type: 'TEXT_INSIGHT',
+    title: spec.title,
+    data: { body: spec.body, tone: spec.tone },
+  }
+}
+
 function buildActionList(spec: ScenarioTemplate['actionList']): ActionListWidget {
   return {
     id: spec.id,
@@ -115,6 +140,8 @@ function composeDashboard(template: ScenarioTemplate): DashboardResponse {
   const widgets: Widget[] = [
     ...template.metricCards.map(buildMetricCard),
     buildTable(template.table),
+    buildDynamicForm(template.form),
+    buildTextInsight(template.insight),
     buildActionList(template.actionList),
     ...template.distributions.map(buildDistribution),
   ]

@@ -59,6 +59,9 @@ function SortableWidgetTileImpl({ id, group, className, children }: SortableWidg
     <div
       ref={setNodeRef}
       style={style}
+      // Queried by `dashboard-grid.tsx`'s streaming-reveal auto-scroll to
+      // bring each newly-arrived widget into view.
+      data-widget-id={id}
       className={cn(
         'relative transition-[opacity,transform,box-shadow] duration-150',
         isDragging && 'opacity-45 shadow-overlay',

@@ -13,7 +13,7 @@ export interface WidgetComponentProps {
  * component, lazily. An unknown/rarely-used widget type is never in the
  * initial bundle — the registry render loop (dashboard-grid.tsx) looks up a
  * key here and falls back to `UnknownWidgetFallback` for a `type` that isn't
- * one of these four.
+ * one of these six.
  */
 export const widgetRegistry: Record<
   WidgetType,
@@ -21,6 +21,8 @@ export const widgetRegistry: Record<
 > = {
   METRIC_CARD: lazy(() => import('@/components/widgets/metric-card-widget')),
   DATA_TABLE: lazy(() => import('@/components/widgets/data-table-widget')),
+  DYNAMIC_FORM: lazy(() => import('@/components/widgets/dynamic-form-widget')),
+  TEXT_INSIGHT: lazy(() => import('@/components/widgets/text-insight-widget')),
   ACTION_LIST: lazy(() => import('@/components/widgets/action-list-widget')),
   DISTRIBUTION_CHART: lazy(() => import('@/components/widgets/distribution-chart-widget')),
 }

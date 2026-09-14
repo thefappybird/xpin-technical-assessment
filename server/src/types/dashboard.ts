@@ -6,6 +6,8 @@
 export type WidgetType =
   | 'METRIC_CARD'
   | 'DATA_TABLE'
+  | 'DYNAMIC_FORM'
+  | 'TEXT_INSIGHT'
   | 'ACTION_LIST'
   | 'DISTRIBUTION_CHART'
 
@@ -58,6 +60,56 @@ export interface DataTableWidget extends WidgetBase {
   }
 }
 
+interface DynamicFormFieldBase {
+  name: string
+  label: string
+}
+
+export interface SliderFormField extends DynamicFormFieldBase {
+  type: 'slider'
+  min: number
+  max: number
+  step?: number
+  default: number
+}
+
+export interface ToggleFormField extends DynamicFormFieldBase {
+  type: 'toggle'
+  default: boolean
+}
+
+export interface SelectFormFieldOption {
+  value: string
+  label: string
+}
+
+export interface SelectFormField extends DynamicFormFieldBase {
+  type: 'select'
+  options: SelectFormFieldOption[]
+  default: string
+}
+
+/** Discriminated on `type` — the registry of controls `DYNAMIC_FORM` can render, per DESIGN.md's Inputs/Fields section (slider, select, toggle switch). */
+export type DynamicFormField = SliderFormField | ToggleFormField | SelectFormField
+
+export interface DynamicFormWidget extends WidgetBase {
+  type: 'DYNAMIC_FORM'
+  data: {
+    fields: DynamicFormField[]
+    /** Last-submitted (confirmed) value per field name, keyed by `DynamicFormField['name']` — separate from each field's own `default`. */
+    values: Record<string, string | number | boolean>
+  }
+}
+
+export interface TextInsightWidget extends WidgetBase {
+  type: 'TEXT_INSIGHT'
+  data: {
+    body: string
+    /** Same status vocabulary as `MetricCardWidget['data']['status']` — reused, not redeclared, so both map onto the one shared `StatusPill`. */
+    tone?: 'success' | 'warning' | 'error' | 'neutral'
+  }
+}
+
 export interface ActionListItem {
   id: string
   label: string
@@ -87,6 +139,8 @@ export interface DistributionChartWidget extends WidgetBase {
 export type Widget =
   | MetricCardWidget
   | DataTableWidget
+  | DynamicFormWidget
+  | TextInsightWidget
   | ActionListWidget
   | DistributionChartWidget
 
@@ -140,6 +194,15 @@ export interface TableQueryPayload {
 /** Payload for the `'checklist/toggle-item'` action on ACTION_LIST widgets. */
 export interface ChecklistToggleItemPayload {
   itemId: string
+}
+
+/**
+ * Payload for the `'form/submit'` action on DYNAMIC_FORM widgets — every
+ * field's current value travels together as one submit, matching DESIGN.md's
+ * one-Submit-button-per-card contract (no per-field auto-submit on change).
+ */
+export interface DynamicFormSubmitPayload {
+  values: Record<string, string | number | boolean>
 }
 
 /**
