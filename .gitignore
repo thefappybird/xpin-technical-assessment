@@ -1,0 +1,46 @@
+# === AI tooling (local-only, never shipped in this public submission) ===
+.claude/
+.agents/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.clinerules/
+.roo/
+.trae/
+.codeium/
+.continue/
+.aider*
+.qwen/
+.gemini/
+CLAUDE.md
+AGENTS.md
+AGENT.md
+GEMINI.md
+CRUSH.md
+.mcp.json
+mcp.json
+opencode.json
+copilot-instructions.md
+.github/copilot-instructions.md
+
+# === Dependencies / build output (repo-wide safety net; client & server each also have their own) ===
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+coverage/
+
+# === Environment & secrets ===
+.env
+.env.*
+!.env.example
+
+# === OS / editor ===
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
