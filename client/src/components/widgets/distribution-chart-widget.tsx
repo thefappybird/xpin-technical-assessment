@@ -34,9 +34,13 @@ function DistributionChartWidgetImpl({ widget }: WidgetComponentProps) {
             {/* flex-1, not a fixed height: grows to fill whatever height the
                 grid row settles on (e.g. matching a taller sibling like
                 Recommended actions) instead of leaving dead space below a
-                short, fixed-height chart. */}
+                short, fixed-height chart. The min-height floor matters just
+                as much as the flex-1 ceiling: when this card has no taller
+                sibling to stretch against (e.g. it lands alone in a
+                trailing full-width row), flex-1 has nothing to grow into,
+                and short-but-wide bars read as flat and disproportionate. */}
             <div
-              className="flex min-h-[80px] flex-1 items-end gap-1.5"
+              className="flex min-h-[180px] flex-1 items-end gap-1.5"
               role="img"
               aria-label={`${chart.title} bar chart`}
             >

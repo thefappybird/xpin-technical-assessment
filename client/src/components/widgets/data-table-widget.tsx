@@ -332,7 +332,16 @@ function DataTableWidgetImpl({ widget }: WidgetComponentProps) {
 
         {/* Desktop: real <table>, virtualized body. */}
         <div className="hidden rounded-md border md:block">
-          <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: MAX_BODY_HEIGHT }}>
+          {/* overscroll-contain: without it, once this box hits its own
+              scroll boundary, leftover wheel/trackpad input "chains" up to
+              the page's own scroll container — a tiny extra vertical shift
+              right at the bottom that reads as a jitter even though nothing
+              in the table itself moved. */}
+          <div
+            ref={scrollRef}
+            className="overflow-auto overscroll-contain"
+            style={{ maxHeight: MAX_BODY_HEIGHT }}
+          >
             <Table
               className="table-fixed"
               // This widget's own `scrollRef` div above is already the sole
@@ -393,8 +402,14 @@ function DataTableWidgetImpl({ widget }: WidgetComponentProps) {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: Math.min(pagination.pageSize, 8) }).map((_, i) => (
-                    <TableRow key={`skeleton-${i}`}>
+                  // Matches the row count AND row height already on screen
+                  // (this query is non-optimistic, so `rows` still holds the
+                  // previous page/filter's results throughout the loading
+                  // window) — otherwise a shorter, uncapped skeleton height
+                  // shrinks the table for the loading window and then grows
+                  // it back once real data lands, which reads as a glitch.
+                  Array.from({ length: Math.max(rows.length, 1) }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`} style={{ height: ROW_HEIGHT }}>
                       {columns.map((column) => (
                         <TableCell key={column.key}>
                           <Skeleton className="h-4 w-full" />
@@ -465,7 +480,11 @@ function DataTableWidgetImpl({ widget }: WidgetComponentProps) {
         {/* Mobile/tablet: card-per-row — same columns/rows, no horizontal scroll (DESIGN.md's No-Sideways-Scroll Rule). */}
         <div className="flex flex-col gap-2 md:hidden">
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
+            // Same reasoning as the desktop skeleton above: match the row
+            // count already on screen so this doesn't shrink then grow.
+            Array.from({ length: Math.max(rows.length, 1) }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-md" />
+            ))
           ) : rows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No matching rows.</p>
           ) : (
